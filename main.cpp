@@ -63,16 +63,19 @@ void Buffer:: producerEnter(int i)
 
 		writing (q);
 		size++;
-		if (q.front()%2==0)
-			signal(even);
-		else
-			signal(odd);
 	}
 
-	if (size == 5)
+	if (size >= 5 && q.front()%2==0)
 	{
-		signal(empty);
+		signal(even);
 	}
+	else
+	{
+		if (size >= 5 && q.front()%2==1)
+		{
+			signal(odd);
+		}
+	} 
 	leave();
 }
 
@@ -80,30 +83,18 @@ void Buffer:: consEvenEnter()
 {
 	enter();
 	cout << "The consumer A tries to take something..." << endl << endl;
-	if(size <= 4) 
+	if(size <= 4 || q.front()%2==1) 
 	{
-		wait(empty);
+		wait(even);
 	}
 
-	if (q.front()%2==0)
-	{		
-		int a=q.at(0);
-		q.pop_front();
+	int a=q.at(0);
+	q.pop_front();
 
-		cout << "The consumer A takes from a store the even number " << a << endl;
+	cout << "The consumer A takes from a store the even number " << a << endl;
 		
-		size--;
-		writing(q);
-	}
-	else
-	{
-		signal(empty);
-		signal (odd);
-		wait (even);
-
-		leave();
-		return;
-	}
+	size--;
+	writing(q);
 
 	if (size == 8)
 	{
@@ -117,31 +108,18 @@ void Buffer:: consOddEnter()
 {
 	enter();
 	cout << "The consumer B tries to take something..." << endl << endl;
-	if(size <= 4) 
+	if(size <= 4 || q.front()%2==0) 
 	{
-		wait(empty);
-	}
-	
-	if (q.front()%2==1)
-	{
-		signal(odd);
-		int a=q.at(0);
-		q.pop_front();
-
-		cout << "The consumer B takes from a store the even number " << a << endl;
-	
-		size--;
-		writing(q);
-	}
-	else
-	{
-		signal(empty);
-		signal (even);
 		wait (odd);
-
-		leave();
-		return;
 	}
+	
+	int a=q.at(0);
+	q.pop_front();
+
+	cout << "The consumer B takes from a store the even number " << a << endl;
+	
+	size--;
+	writing(q);
 
 	if (size == 8)
 	{
@@ -155,7 +133,7 @@ void producerA()
 {
 	while (true)
 	{
-		int num=rand()%120+1;
+		int num=rand()%100+1;
 	  	waiting(PRODUCER_A_SLEEP);
 	  	buffer.producerEnter(num);
 	}
@@ -165,7 +143,7 @@ void producerB()
 {
 	while (true)
 	{
-		int num=rand()%120+1;
+		int num=rand()%100+1;
 	  	waiting(PRODUCER_B_SLEEP);
 	  	buffer.producerEnter(num);
 	}
