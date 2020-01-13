@@ -35,13 +35,12 @@ inline void writing(deque<int> q)
 class Buffer : private Monitor 
 {
  public:
-	Buffer(): size(0) {}
+	Buffer(){}
 	void producerEnter(int i);
 	void consEvenEnter();
 	void consOddEnter();	
 	
  private:
- 	int size;
 	Condition full, empty, even, odd;
 };
 
@@ -51,31 +50,27 @@ void Buffer:: producerEnter(int i)
 {
 	enter();
 	cout << "The producer tries to product something...\n";
-	if(size == 9) 
+	if(q.size() == 9) 
 	{
 		wait(full);
 	}
-	else
-	{
-		q.push_back(i);
+	q.push_back(i);
 
-		cout << "The producer products and puts into a store the number " << i << endl;
+	cout << "The producer products and puts into a store the number " << i << endl;
 
-		writing (q);
-		size++;
-	}
+	writing (q);
 
-	if (size >= 5 && q.front()%2==0)
+	if (q.size() >= 5)
 	{
-		signal(even);
-	}
-	else
-	{
-		if (size >= 5 && q.front()%2==1)
+		if (q.front()%2==0)
+		{
+			signal(even);
+		}
+		else
 		{
 			signal(odd);
 		}
-	} 
+	}
 	leave();
 }
 
@@ -83,7 +78,7 @@ void Buffer:: consEvenEnter()
 {
 	enter();
 	cout << "The consumer A tries to take something..." << endl << endl;
-	if(size <= 4 || q.front()%2==1) 
+	if (q.size()<=4 || q.front()%2==1)
 	{
 		wait(even);
 	}
@@ -93,14 +88,14 @@ void Buffer:: consEvenEnter()
 
 	cout << "The consumer A takes from a store the even number " << a << endl;
 		
-	size--;
 	writing(q);
 
-	if (size == 8)
-	{
-		signal(full);
-	}
+	signal(full);
 
+	if (q.front()%2==1 && q.size()>4)
+	{
+		signal(odd);
+	}
 	leave();	
 }
 
@@ -108,9 +103,9 @@ void Buffer:: consOddEnter()
 {
 	enter();
 	cout << "The consumer B tries to take something..." << endl << endl;
-	if(size <= 4 || q.front()%2==0) 
+	if (q.size()<=4 || q.front()%2==0)
 	{
-		wait (odd);
+		wait(odd);
 	}
 	
 	int a=q.at(0);
@@ -118,12 +113,13 @@ void Buffer:: consOddEnter()
 
 	cout << "The consumer B takes from a store the even number " << a << endl;
 	
-	size--;
 	writing(q);
 
-	if (size == 8)
+	signal(full);
+
+	if (q.front()%2==0 && q.size()>4)
 	{
-		signal(full);
+		signal(even);
 	}
 	leave();
 }	
